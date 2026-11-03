@@ -25,27 +25,30 @@ Or open the repo in **GitHub Codespaces**: it installs everything and starts the
 
 ## Environment variables
 
-There is one, and it's optional until a module needs it. Put it in `.env.local` (never commit it) and in your Vercel project settings.
+Each is optional until a module needs it. Put them in `.env.local` (never commit it) and in your Vercel project settings.
 
-| Variable                               | Used for                        | Where to find it                                                                   |
-| -------------------------------------- | ------------------------------- | ---------------------------------------------------------------------------------- |
-| `GOOGLE_GENERATIVE_AI_API_KEY`         | All AI calls (`lib/ai/call.ts`) | [Google AI Studio](https://aistudio.google.com) > Get API key (free, no card)      |
+| Variable                               | Used for                        | Where to find it                                                                              |
+| -------------------------------------- | ------------------------------- | --------------------------------------------------------------------------------------------- |
+| `GOOGLE_GENERATIVE_AI_API_KEY`         | All AI calls (`lib/ai/call.ts`) | [Google AI Studio](https://aistudio.google.com) > Get API key (free, no card)                 |
+| `NEXT_PUBLIC_SUPABASE_URL`             | Stock, from Module 2 part 2     | [Supabase](https://supabase.com) > your project > Project Settings > API keys (free, no card) |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Stock, from Module 2 part 2     | The same page. The publishable key, never the secret one                                      |
 
 ## Commands
 
-| Command                              | What it does                                                           |
-| ------------------------------------ | ---------------------------------------------------------------------- |
-| `npm run dev`                        | Start the dev server                                                   |
-| `npm test`                           | Run the app's tests                                                    |
-| `npm run check`                      | Show which acceptance criteria for the current module pass             |
-| `npm run lint` / `npm run typecheck` | Check code style and types                                             |
-| `npm run format`                     | Format the code with Prettier                                          |
-| `npm run start-module`               | One-time setup after cloning a module branch                           |
+| Command                              | What it does                                               |
+| ------------------------------------ | ---------------------------------------------------------- |
+| `npm run dev`                        | Start the dev server                                       |
+| `npm test`                           | Run the app's tests                                        |
+| `npm run check`                      | Show which acceptance criteria for the current module pass |
+| `npm run lint` / `npm run typecheck` | Check code style and types                                 |
+| `npm run format`                     | Format the code with Prettier                              |
+| `npm run start-module`               | One-time setup after cloning a module branch               |
 
 ## AI coding agents
 
 `CLAUDE.md` / `AGENTS.md` hold the rules for Claude Code and Codex. `.mcp.json`
-gives Claude Code two MCP servers: shadcn and Next.js docs (`next-devtools`).
+gives Claude Code three MCP servers: shadcn, Next.js docs (`next-devtools`)
+and Supabase, which needs authorizing with `/mcp` before it does anything.
 
 **Codex** doesn't read `.mcp.json`. Add the same servers to `~/.codex/config.toml`:
 

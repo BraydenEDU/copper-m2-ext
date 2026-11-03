@@ -19,7 +19,7 @@ As a **shopper on the Copper State Labs site**, I want to **ask what Copper prod
 | Where | What |
 |---|---|
 | `lib/copper/catalog.ts` | `getProducts()` and `getPlans()`: the real prices and colors (from Module 1) |
-| `lib/copper/inventory.ts` | `readInventory()`: the stock list, one row per product color with its units and next shipment date (Product Bible Section 10). Already written for you. It returns `null` when stock can't be read |
+| `lib/copper/inventory.ts` | `readInventory()`: the stock list, one row per product color with its units and next shipment date (Product Bible Section 10). Already written for you, and the only file that knows where stock is kept, so part 2 changes it and nothing else. It returns `null` when stock can't be read |
 | `lib/ai/call.ts` | `callStream()`: streams a model's answer and logs the call to `ai_calls`. `THOUGHT_SUMMARIES` asks Gemini to explain its thinking |
 | `lib/ai/live.ts` | `createLive()` and `readLive()`: send a value that arrives in updates from a Server Action to the page |
 | `lib/copper/assistant/progress.ts` | The `Progress` type (the steps and reply the panel draws), `toolCallsOf()`, and `TOOL_LABELS`: the four tool names with a plain-English label each. The panel imports from here, never from `tools.ts`, which reads the stock list |
@@ -109,7 +109,7 @@ Export the input rules as `calculateCostInput` and `checkAvailabilityInput` (zod
 
 ### 2. Copper's instructions (`lib/copper/assistant/instructions.ts`)
 
-Write `COPPER_INSTRUCTIONS` yourself, in plain English, at least 40 words. It must tell the model to:
+`COPPER_INSTRUCTIONS`, in plain English, at least 40 words. It must tell the model to:
 - Speak as Copper: warm, short sentences, plain language (Product Bible Section 2).
 - **Always** use the tools for products, colours, prices, totals and stock, and never answer them from memory.
 - Treat "what colours does it come in?" and "is that colour in stock?" as different questions: the first is `get_products`, the second is `check_availability`.
@@ -164,7 +164,7 @@ Is Copper Notes in Night Sky in stock?
 Is Copper Plus cheaper monthly or yearly?
 ```
 
-They're the first three questions in your report, so a shopper's first click is also the thing you'll write about.
+They're the three questions this module is built around, so a shopper's first click is also the thing you try first.
 
 **Two conversations, not one.** Tools on and tools off are separate chats. Flipping the switch swaps which one you see, and each sends only its own history. Otherwise the tools-off model just copies the answer the tools worked out, and the comparison proves nothing.
 
@@ -298,7 +298,7 @@ With tools off, put a bordered Sonoran Sunset box above the text:
 Same stations, which is what makes the comparison land, with three changes:
 
 - The rail is Sonoran Sunset instead of Copper and Teal.
-- Station 1 reads **TOOLS GIVEN TO COPPER: NONE**, the three names struck
+- Station 1 reads **TOOLS GIVEN TO COPPER: NONE**, the same four names struck
   through and muted, with the line "Copper has to answer from memory alone."
 - The thinking node is Sonoran Sunset too.
 
@@ -344,31 +344,52 @@ Each criterion's ID matches its test in `specs/module-2/tests/`. Run `npm run ch
 - **AC-M2.14** With **Use tools** off, the model gets no instructions and no tools; with it on, it gets all four.
 - **AC-M2.15** `COPPER_INSTRUCTIONS` is written (no TODO, at least 40 words) and is sent to the model with the whole conversation.
 
-### REPORT: Tools on vs. off (TA-graded)
-Fill in `specs/module-2/report.md`: ask the five test questions in both chats, read one tool card and one thought summary closely, change a stock level in the stock list and ask again, and explain what you saw.
+### DEPLOY, AI-KEY and SUPABASE
+- **DEPLOY** (10) Your app is live on Vercel and the live page shows "Ask Copper".
+- **AI-KEY** (10) That live page shows the chat, not the setup card: the Google key is set in the Vercel project, not only in `.env.local`.
+- **SUPABASE** (10, part 2) `readInventory()` reads the Supabase `inventory` table, `lib/copper/data/inventory.json` is gone, and a migration in `supabase/migrations/` creates the table.
 
-### DEPLOY
-Your app is live on Vercel and the live page shows "Ask Copper". Add your AI key to the Vercel project so the chat works there too.
+## Part 2: live stock
 
-## REPORT rubric
+Part 1 reads stock from `lib/copper/data/inventory.json`, which ships inside
+the deployed app. Changing it means a commit and a deploy, so the live site
+can only ever be as fresh as the last push. Part 2 fixes that.
 
-Five rows, 0 to 2 points each (10 points).
-
-| | 0 | 1 | 2 |
+| | Where stock lives | Who can change it | Takes effect |
 |---|---|---|---|
-| **Results table** | Missing | Partly filled | Every row filled from your own runs |
-| **Reading the steps** | Missing | Copies the card | Explains what Copper thought, what it sent and what came back, and whether it picked the right inputs |
-| **Tools off and live stock** | Missing | Says what happened | Explains *why*: the model can't know prices or today's stock without tools |
-| **Risk** | Missing | Names a risk | Names a risk, what the tools do about it, and who at Copper should own it |
-| **Reflection** | Missing | Generic | Specific to what you saw, and names one thing you'd change |
+| Part 1 | A file in the repo | A developer | After a deploy |
+| Part 2 | A Supabase `inventory` table | Anyone with the Supabase login | On the next question |
+
+What has to be true at the end of part 2:
+
+- The `inventory` table exists in the student's own Supabase project, with the
+  six rows from the Product Bible (Section 10). `supabase/migrations/` and
+  `supabase/seed.sql` are in the starter; the student has Claude apply them
+  through the Supabase MCP server rather than running database commands.
+- `readInventory()` in `lib/copper/inventory.ts` reads that table, and keeps
+  its contract exactly: `InventoryRow[]` when it works, `null` when it can't
+  read. `check_availability` already answers "stock can't be checked" on
+  `null`, so a missing key degrades instead of crashing.
+- `lib/copper/data/inventory.json` is deleted.
+- `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` are set
+  in `.env.local` and in Vercel.
+- `npm run check` still passes **27 of 27**. No acceptance criterion changes in
+  part 2: the tests replace the inventory module with a fake, so where stock
+  really comes from is invisible to them.
+- Changing a stock number in the Supabase table editor changes the deployed
+  site's answer with no commit and no deploy.
+
+Nothing else moves. Prices and colors stay in the catalog, because what a
+product costs and what colors it comes in are facts that don't change daily.
+Stock does.
 
 ## Non-goals
 
 - No answers from documents (warranty, manuals, policies). That's Module 3.
 - No memory between visits. Each page load starts fresh.
 - No actions with side effects: no orders, reservations, refunds or sign-ups. The tools only read.
-- No new pages, routes or UI libraries, and no database: stock comes from the starter's stock list.
-- Don't edit `lib/copper/catalog.ts`, `lib/copper/inventory.ts`, their data in `lib/copper/data/`, or the tests in `specs/*/tests/`.
+- No new pages, routes or UI libraries. In part 1 there is no database either: stock comes from the starter's stock list. Part 2 moves stock into a Supabase table and changes nothing else.
+- Don't edit `lib/copper/catalog.ts`, `lib/copper/inventory.ts`, their data in `lib/copper/data/`, or the tests in `specs/*/tests/` — except in part 2, which rewrites `readInventory()` and deletes the stock file.
 
 ## How it's graded
 
@@ -377,7 +398,8 @@ Five rows, 0 to 2 points each (10 points).
 | Part A: the chat widget (AC-M2.1 to AC-M2.4) | 20 | Tests |
 | Part B: the tools (AC-M2.5 to AC-M2.10) | 30 | Tests |
 | Part C: streaming (AC-M2.11 to AC-M2.15) | 25 | Tests (with a fake model and database, so no keys or cost) |
-| REPORT | 10 | A TA, using the REPORT rubric above |
-| DEPLOY | 15 | The grader checks your live site |
+| DEPLOY | 10 | The grader loads your live site |
+| AI-KEY | 10 | The live site shows the chat, not the setup card |
+| SUPABASE | 10 | Stock reads from the Supabase table (part 2) |
 
 `specs/module-2/rubric.md` has the full list.

@@ -25,6 +25,7 @@
     "@streamdown/code": "2.0.0",
     "@streamdown/math": "1.0.3",
     "@streamdown/mermaid": "1.0.3",
+    "@supabase/supabase-js": "2.117.3",
     "@tanstack/react-table": "9.2.8",
     "ai": "7.0.137",
     "class-variance-authority": "0.7.1",

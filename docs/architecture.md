@@ -27,7 +27,10 @@ A Google AI Studio key is optional until a module needs one.
 1. A user opens a page in `app/`.
 2. Server code checks what's configured (`isAiConfigured()`). If the key is
    missing, the page renders `<SetupRequired />` instead of crashing.
-3. Data comes from files under `lib/copper/data/`.
+3. Data comes from files under `lib/copper/data/`, except where a module has
+   moved it to a database: Module 2 part 2 moves stock to a Supabase
+   `inventory` table, read through `lib/copper/inventory.ts`. Facts that don't
+   change daily (prices, colors) stay in the files.
 4. AI requests go through `callText` / `callObject` in `lib/ai/call.ts`, which
    calls Google and then prints one `[ai_calls]` line: `module`, `feature`,
    `model`, tokens, `cost_usd`, `latency_ms`, `ok`.

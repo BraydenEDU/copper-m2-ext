@@ -39,6 +39,26 @@ async function fromGitHub(ctx) {
   return null;
 }
 
+/**
+ * A second criterion read from the same page: it passes when `text` is absent.
+ * Module 2 uses it for AI-KEY, because the panel renders the "Set up Google
+ * AI" card when the key is missing, so the card's presence is the failure.
+ */
+function absentResult(settings, html) {
+  const absent = settings.deploy?.absent;
+  if (!absent) return [];
+  const found = html.includes(absent.text);
+  return [
+    {
+      criterion: absent.criterion,
+      passed: !found,
+      detail: found
+        ? (absent.detail ?? `the live site still shows "${absent.text}"`)
+        : "configured on the live site",
+    },
+  ];
+}
+
 const deployCheck = {
   id: "deploy",
   description: "Vercel deployment",
@@ -47,8 +67,20 @@ const deployCheck = {
   needsWorkspace: false,
   async run(ctx) {
     const marker = ctx.settings.deploy?.marker ?? DEFAULT_MARKER;
+    const absent = ctx.settings.deploy?.absent;
     const fail = (detail) => ({
-      results: [{ criterion: "DEPLOY", passed: false, detail }],
+      results: [
+        { criterion: "DEPLOY", passed: false, detail },
+        ...(absent
+          ? [
+              {
+                criterion: absent.criterion,
+                passed: false,
+                detail: "no live site to read",
+              },
+            ]
+          : []),
+      ],
       errors: [],
     });
 
@@ -100,7 +132,8 @@ const deployCheck = {
     const used = notes.length > 0 ? `; ${notes.join("; ")}` : "";
     if (!response.ok)
       return fail(`${url} returned HTTP ${response.status}${used}`);
-    if (!(await response.text()).includes(marker)) {
+    const html = await response.text();
+    if (!html.includes(marker)) {
       return fail(`${url} is up but doesn't show "${marker}"${used}`);
     }
     const commit =
@@ -116,6 +149,7 @@ const deployCheck = {
           passed: true,
           detail: `live at ${url} (${commit}${used})`,
         },
+        ...absentResult(ctx.settings, html),
       ],
       errors: [],
     };

@@ -2,17 +2,19 @@
   "mcpServers": {
     "shadcn": {
       "command": "npx",
-      "args": [
-        "shadcn@4.21.4",
-        "mcp"
-      ]
+      "args": ["shadcn@4.21.4", "mcp"]
     },
     "next-devtools": {
       "command": "npx",
-      "args": [
-        "-y",
-        "next-devtools-mcp@0.4.0"
-      ]
+      "args": ["-y", "next-devtools-mcp@0.4.0"]
+    },
+    "supabase": {
+      "type": "http",
+      "url": "https://mcp.supabase.com/mcp"
+    },
+    "vercel": {
+      "type": "http",
+      "url": "https://mcp.vercel.com"
     }
   }
 }

@@ -5,6 +5,27 @@ The company's facts live in `docs/copper-state-labs/product-bible.md`.
 Each module's spec, instructions, tests and evals live in `specs/module-N/`.
 How the app fits together is in `docs/architecture.md`; add a section there when a module adds pages, tables or AI calls.
 
+## Who you're talking to
+
+The person directing you is a business student, not a programmer. Most have
+never written code and are being graded on whether they can direct you well
+and explain what came out.
+
+- **Explain in plain English.** Say what a change does and why it matters
+  before you say how. Skip the jargon, or define it the first time: "a tool is
+  a small piece of code the model can choose to run".
+- **Say what you're about to do, in one or two sentences**, before you do it.
+  They're meant to approve or redirect you, and they can't approve what they
+  don't follow.
+- **Don't assume they know the stack.** Server Actions, streaming, zod schemas
+  and the AI SDK are all new to them. A one-line explanation beats a link.
+- **When something fails, say what broke and what you'll try**, not just the
+  error. Paste the error too, but don't leave it to speak for itself.
+- **Never imply they should already know something.** If a question sounds
+  basic, answer it straight.
+- They still own the work: when they ask for something that will cost them
+  points or break a check, say so plainly and suggest the alternative.
+
 ## How to work
 
 - **Plan before coding.** Show the plan and wait for approval before changing files.

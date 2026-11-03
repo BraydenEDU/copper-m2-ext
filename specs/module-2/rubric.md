@@ -17,5 +17,6 @@
 | AC-M2.13 | 5 | auto | Each question is logged to ai_calls (module 2, ask-copper, whichever model answered) |
 | AC-M2.14 | 5 | auto | Use tools off sends no instructions and no tools; on sends all four |
 | AC-M2.15 | 5 | auto | Copper's instructions are written and sent with the conversation |
-| REPORT | 10 | manual | Tools on vs. off report in specs/module-2/report.md (rubric in spec.md) |
-| DEPLOY | 15 | auto | The live Vercel site shows the Ask Copper launcher |
+| DEPLOY | 10 | auto | The live Vercel site shows the Ask Copper launcher |
+| AI-KEY | 10 | auto | The live site has a Google AI key: it shows the chat, not the setup card |
+| SUPABASE | 10 | auto | Stock reads from the Supabase inventory table; the JSON file is gone (part 2) |
