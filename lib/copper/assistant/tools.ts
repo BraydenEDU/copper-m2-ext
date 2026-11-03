@@ -1,4 +1,5 @@
-// Module 2: the four tools Ask Copper can use. Products and prices come from
+// Module 2: the tools Ask Copper can use (the four from the spec, plus
+// compare_products from the copper-m2-ext extension). Products and prices come from
 // lib/copper/catalog.ts and stock from lib/copper/inventory.ts, so the
 // chatbot never has to make them up.
 // The contract for each tool is in specs/module-2/spec.md.
@@ -41,6 +42,23 @@ export type CostBreakdown = {
 };
 
 export type CheckAvailabilityInput = { product: ProductId; color?: string };
+
+export type CompareProductsInput = { products: [ProductId, ProductId] };
+
+export type Comparison = {
+  products: {
+    id: ProductId;
+    name: string;
+    type: string;
+    priceUsd: number;
+    features: string[];
+    colors: string[];
+  }[];
+  sharedColors: string[];
+  onlyIn: { product: string; colors: string[] }[];
+  /** How much more the pricier product costs, and which one it is. */
+  priceDifference: { usd: number; moreExpensive: string | null };
+};
 
 export type Stock = "in_stock" | "low_stock" | "backordered";
 
@@ -174,6 +192,44 @@ export async function checkAvailability(
   return { status: "ok", product: product.name, colors: result };
 }
 
+export const compareProductsInput: z.ZodType<CompareProductsInput> = z.object({
+  products: z
+    .tuple([productIdSchema, productIdSchema])
+    .refine(([a, b]) => a !== b, "Pick two different products"),
+});
+
+/** compare_products: two products side by side, read from the catalog. */
+export function compareProducts(input: CompareProductsInput): Comparison {
+  const catalog = getProducts();
+  const [a, b] = input.products.map(
+    (id) => catalog.find((p) => p.id === id)!,
+  );
+
+  const sharedColors = a.colors.filter((c) => b.colors.includes(c));
+  const diff = roundCents(Math.abs(a.priceUsd - b.priceUsd));
+
+  return {
+    products: [a, b].map((p) => ({
+      id: p.id,
+      name: p.name,
+      type: p.type,
+      priceUsd: p.priceUsd,
+      features: p.features.map((f) => f.name),
+      colors: p.colors,
+    })),
+    sharedColors,
+    onlyIn: [a, b].map((p) => ({
+      product: p.name,
+      colors: p.colors.filter((c) => !sharedColors.includes(c)),
+    })),
+    priceDifference: {
+      usd: diff,
+      moreExpensive:
+        diff === 0 ? null : a.priceUsd > b.priceUsd ? a.name : b.name,
+    },
+  };
+}
+
 /** The tools the model can call. They only read: nothing is bought or changed. */
 export const copperTools = {
   get_products: tool({
@@ -198,5 +254,11 @@ export const copperTools = {
       "Check today's stock for a Copper product, or for one color of it, from the stock list.",
     inputSchema: checkAvailabilityInput,
     execute: async (input) => checkAvailability(input),
+  }),
+  compare_products: tool({
+    description:
+      "Compare two Copper products side by side: type, price difference, features and which colors they share.",
+    inputSchema: compareProductsInput,
+    execute: async (input) => compareProducts(input),
   }),
 };

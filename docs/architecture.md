@@ -85,3 +85,28 @@ When a module changes how the app fits together, add a section here:
 **Risks and open questions:** cost, privacy, accuracy or safety risks, and how
 you handle them.
 ```
+
+## Module 2 extension: compare_products
+
+**Summary:** a fifth Ask Copper tool that puts two products side by side, so
+"what's the difference between Copper Home and Copper Notes?" is answered
+from the catalog instead of from the model's memory.
+
+| Piece | Where | What it does |
+|---|---|---|
+| Tool | `lib/copper/assistant/tools.ts` (`compareProducts`, `compare_products`) | Type, price, features and colors of both products, the colors they share, and the price difference |
+| Instructions | `lib/copper/assistant/instructions.ts` | Tells Copper to use `compare_products` for comparisons |
+| Tests | `tests/tools.test.ts` | Price difference, shared colors, catalog changes, input rules |
+| AI calls | `lib/ai/call.ts` (2, ask-copper) | No new call: the tool runs inside the existing Ask Copper stream |
+
+**Data flow:** shopper asks to compare → model calls `compare_products` →
+tool reads `lib/copper/catalog.ts` → result goes back to the model → Copper
+replies.
+
+**Decisions and trade-offs:** it reads only the catalog, not stock, so it
+stays fast and can't fail; Copper still uses `check_availability` for stock.
+It takes exactly two different products, since that's all Copper sells.
+
+**Risks and open questions:** the Module 2 checks AC-M2.8 and AC-M2.14 expect
+exactly four tools, so they fail in this extension repo by design. The graded
+copper-m2 repo keeps four.

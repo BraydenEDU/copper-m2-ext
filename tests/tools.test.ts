@@ -5,6 +5,8 @@ import {
   calculateCostInput,
   checkAvailability,
   checkAvailabilityInput,
+  compareProducts,
+  compareProductsInput,
   copperTools,
   getPrices,
   listProducts,
@@ -45,10 +47,11 @@ describe("catalog tools", () => {
     expect(prices.plans.map((p) => p.id)).toEqual(["free", "copper-plus"]);
   });
 
-  it("copperTools has the four described tools", () => {
+  it("copperTools has the five described tools", () => {
     expect(Object.keys(copperTools).sort()).toEqual([
       "calculate_cost",
       "check_availability",
+      "compare_products",
       "get_prices",
       "get_products",
     ]);
@@ -159,5 +162,64 @@ describe("check_availability", () => {
     expect(checkAvailabilityInput.safeParse({ product: "phone" }).success).toBe(
       false,
     );
+  });
+});
+
+describe("compare_products", () => {
+  it("compares Copper Home and Copper Notes side by side", () => {
+    const result = compareProducts({ products: ["copper-home", "copper-notes"] });
+    expect(result.products.map((p) => p.name)).toEqual([
+      "Copper Home",
+      "Copper Notes",
+    ]);
+    expect(result.products[0].features).toContain("Monsoon Mode");
+    expect(result.priceDifference).toEqual({
+      usd: 20,
+      moreExpensive: "Copper Home",
+    });
+    expect(result.sharedColors).toEqual(["Night Sky"]);
+    expect(result.onlyIn).toEqual([
+      { product: "Copper Home", colors: ["Polished Copper", "Patina Teal"] },
+      { product: "Copper Notes", colors: ["Brushed Copper", "Desert Sand"] },
+    ]);
+  });
+
+  it("gives the same answer in either order", () => {
+    const result = compareProducts({ products: ["copper-notes", "copper-home"] });
+    expect(result.priceDifference).toEqual({
+      usd: 20,
+      moreExpensive: "Copper Home",
+    });
+    expect(result.sharedColors).toEqual(["Night Sky"]);
+  });
+
+  it("follows the catalog when prices change", async () => {
+    vi.resetModules();
+    const catalog = await vi.importActual<typeof import("@/lib/copper/catalog")>(
+      "@/lib/copper/catalog",
+    );
+    vi.doMock("@/lib/copper/catalog", () => ({
+      ...catalog,
+      getProducts: () =>
+        catalog
+          .getProducts()
+          .map((p) => (p.id === "copper-notes" ? { ...p, priceUsd: 199 } : p)),
+    }));
+    const tools = await import("@/lib/copper/assistant/tools");
+    expect(
+      tools.compareProducts({ products: ["copper-home", "copper-notes"] })
+        .priceDifference,
+    ).toEqual({ usd: 50, moreExpensive: "Copper Notes" });
+    vi.doUnmock("@/lib/copper/catalog");
+    vi.resetModules();
+  });
+
+  it("only accepts two different Copper products", () => {
+    const ok = (products: unknown) =>
+      compareProductsInput.safeParse({ products }).success;
+    expect(ok(["copper-home", "copper-notes"])).toBe(true);
+    expect(ok(["copper-home", "copper-home"])).toBe(false);
+    expect(ok(["copper-home"])).toBe(false);
+    expect(ok(["copper-home", "phone"])).toBe(false);
   });
 });
