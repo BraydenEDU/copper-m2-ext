@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { asSchema } from "ai";
 import {
   calculateCost,
   calculateCostInput,
@@ -221,5 +222,14 @@ describe("compare_products", () => {
     expect(ok(["copper-home", "copper-home"])).toBe(false);
     expect(ok(["copper-home"])).toBe(false);
     expect(ok(["copper-home", "phone"])).toBe(false);
+  });
+
+  it("describes its input in a shape Google accepts (a list, not a tuple)", async () => {
+    const json = (await asSchema(
+      copperTools.compare_products.inputSchema,
+    ).jsonSchema) as { properties: { products: { items: unknown } } };
+    const items = json.properties.products.items;
+    expect(Array.isArray(items), "items is one schema, not a list").toBe(false);
+    expect(typeof items).toBe("object");
   });
 });

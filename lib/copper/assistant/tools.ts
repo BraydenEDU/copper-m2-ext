@@ -43,7 +43,7 @@ export type CostBreakdown = {
 
 export type CheckAvailabilityInput = { product: ProductId; color?: string };
 
-export type CompareProductsInput = { products: [ProductId, ProductId] };
+export type CompareProductsInput = { products: ProductId[] };
 
 export type Comparison = {
   products: {
@@ -194,7 +194,8 @@ export async function checkAvailability(
 
 export const compareProductsInput: z.ZodType<CompareProductsInput> = z.object({
   products: z
-    .tuple([productIdSchema, productIdSchema])
+    .array(productIdSchema)
+    .length(2)
     .refine(([a, b]) => a !== b, "Pick two different products"),
 });
 
