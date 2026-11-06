@@ -130,6 +130,17 @@ function SentInput({ step }: { step: ToolStep }) {
       </div>
     );
   }
+  if (step.name === "compare_products") {
+    const products = Array.isArray(input.products) ? input.products : [];
+    return (
+      <Row
+        name="Products"
+        value={products
+          .map((p) => PRODUCT_NAMES[String(p)] ?? String(p))
+          .join(" vs ")}
+      />
+    );
+  }
   return (
     <div className="space-y-0.5">
       <Row
@@ -233,6 +244,54 @@ function Result({ step }: { step: ToolStep }) {
               value={`${p.name} ${formatUsd(Number(p.monthlyUsd))}/mo · ${formatUsd(Number(p.annualUsd))}/yr`}
             />
           ))}
+      </div>
+    );
+  }
+
+  if (step.name === "compare_products") {
+    const products = (Array.isArray(out.products) ? out.products : []) as Rec[];
+    const onlyIn = (Array.isArray(out.onlyIn) ? out.onlyIn : []) as Rec[];
+    const diff = asRecord(out.priceDifference);
+    return (
+      <div className="space-y-2">
+        <div className="space-y-0.5">
+          {products.map((p) => (
+            <Row
+              key={String(p.id)}
+              name=""
+              value={`${p.name} ${formatUsd(Number(p.priceUsd))} · ${p.type}`}
+            />
+          ))}
+          <p className="text-sm font-medium">
+            {diff.moreExpensive
+              ? `${diff.moreExpensive} costs ${formatUsd(Number(diff.usd))} more`
+              : "Same price"}
+          </p>
+        </div>
+        <div>
+          <p className="text-muted-foreground text-xs">Both come in</p>
+          <div className="mt-1 flex flex-wrap gap-1">
+            {((out.sharedColors as string[]) ?? []).map((c) => (
+              <span key={c} className={cn(pill, "bg-accent text-white")}>
+                {c}
+              </span>
+            ))}
+          </div>
+        </div>
+        {onlyIn.map((o) => (
+          <div key={String(o.product)}>
+            <p className="text-muted-foreground text-xs">
+              Only {String(o.product)}
+            </p>
+            <div className="mt-1 flex flex-wrap gap-1">
+              {((o.colors as string[]) ?? []).map((c) => (
+                <span key={c} className={cn(pill, "bg-chart-4 text-foreground")}>
+                  {c}
+                </span>
+              ))}
+            </div>
+          </div>
+        ))}
       </div>
     );
   }
